@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  namespace: os-namespace
+  labels:
+    tier: api
+spec:
+  selector:
+    matchLabels:
+      tier: api
+  replicas: 2
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        tier: api
+    spec:
+      containers:
+        - name: backend-container
+          image: stanley019/kube-backend:v1
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+
+            limits:
+              cpu: 300m
+              memory: 512Mi
+
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3500
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+            periodSeconds: 5
+
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3500
+            initialDelaySeconds: 5
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 3
+            periodSeconds: 10
+
+          env:
+            - name: USE_DB_AUTH
+              valueFrom:
+                configMapKeyRef:
+                  name: backend-config
+                  key: USE_DB_AUTH
+
+            - name: MONGO_CONN_STR
+              valueFrom:
+                configMapKeyRef:
+                  name: backend-config
+                  key: MONGO_CONN_STR
+            - name: MONGO_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: MONGO_USERNAME
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: MONGO_PASSWORD
+          ports:
+            - protocol: TCP
+              name: backend-port
+              containerPort: 3500
+              
+              
+       

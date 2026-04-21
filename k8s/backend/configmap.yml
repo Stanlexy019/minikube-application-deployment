@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: os-namespace
+data:
+  MONGO_CONN_STR: mongodb://mongo-svc:27017
+  USE_DB_AUTH: "true"
+  
